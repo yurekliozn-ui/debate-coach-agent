@@ -1,0 +1,175 @@
+PRACTICAL TASK — STEP 1 REPORT
+Debate Coach Agent
+An AI-Powered Multi-Perspective Argumentation Assistant
+
+
+Submission Stage: Step 1  ·  Due: 24.04
+Programming Practical Task
+
+
+1. System Description and Goal
+
+1.1  What Is the Debate Coach Agent?
+The Debate Coach Agent is a command-line AI assistant that helps users understand multiple perspectives on any controversial topic. A user provides a debate topic — for example, "Should artificial intelligence be regulated by governments?" — and the system automatically researches that topic using live web search, then produces a structured, balanced debate preparation document covering both sides of the argument.
+The system is specifically designed to simulate what a debate coach or a critical-thinking instructor would do manually: gather recent and relevant information, organise it into logical arguments, evaluate the strength of each argument, and present the findings in a clean, readable format.
+
+1.2  What Problem Does It Solve?
+When a person needs to prepare for a debate, write a persuasive essay, or simply understand both sides of a complex issue, they typically need to spend hours reading multiple sources, separating facts from opinions, and organising arguments manually. This process is time-consuming, often unstructured, and heavily dependent on the user's own ability to think critically.
+The Debate Coach Agent solves this by automating three key steps:
+•	Research — finding and gathering relevant, up-to-date information from the web on the given topic.
+•	Analysis — identifying and structuring the strongest arguments for and against the topic.
+•	Output — producing a formatted debate sheet with scored arguments, key counterpoints, and a recommended reading list.
+
+1.3  Who Would Use This System?
+The system is designed for practical, everyday use. Potential users include:
+•	Students preparing for academic or competitive debates.
+•	Researchers or analysts who need a quick overview of a contested issue.
+•	Writers looking for structured pro/con material before writing an article or essay.
+•	Anyone who wants to understand a topic from multiple perspectives before forming an opinion.
+
+1.4  What Does the System Produce?
+Given a topic as input, the agent returns a structured output document containing the following sections:
+
+Topic Summary	A short neutral description of the debate topic and why it is contested.
+PRO Arguments	3–5 supporting arguments, each with a title, explanation, and source reference.
+CON Arguments	3–5 opposing arguments, each with a title, explanation, and source reference.
+Argument Scores	Each argument receives a strength score (1–10) based on evidence quality and logical soundness.
+Key Counterpoints	For each major argument, a brief counterpoint is listed to help anticipate the opponent's response.
+Recommended Sources	A short list of the most relevant sources found during the research phase.
+
+This output is saved as a plain text file and optionally printed to the terminal, giving the user an immediately usable debate preparation sheet.
+
+2. AI and Agent-Based Approach
+
+2.1  Why an Agent-Based Architecture?
+A traditional program would require a developer to hardcode every step of the process: define what to search, how to parse results, and how to format the output. This approach breaks down quickly when topics vary widely or when results are unpredictable.
+An agent-based architecture solves this by giving the AI model the ability to decide, step by step, what action to take next. Rather than following a fixed script, the agent reasons about the task, chooses which tools to call, interprets the results, and continues until it has gathered enough information to produce a complete answer.
+This makes the system flexible, generalisable, and capable of handling a wide variety of debate topics without any changes to the code.
+
+2.2  How the Agent Works — Step by Step
+The agent follows a structured reasoning loop known as ReAct (Reason → Act → Observe). Each iteration consists of three phases:
+
+Phase	What the Agent Does
+Reason	The agent reads the current task and decides what information it still needs to collect.
+Act	The agent calls one of its available tools — for example, issuing a web search query or writing to a file.
+Observe	The agent reads the tool's output, incorporates it into its understanding, and decides what to do next.
+
+This loop repeats multiple times per request. For a single debate topic, the agent may perform 4–8 tool calls before it has gathered enough information to begin generating the structured output.
+
+2.3  The Agent's Internal Reasoning Process
+When a user submits a topic such as "Should social media be banned for teenagers?", the agent internally follows this sequence:
+
+•	Step 1 — Understand the topic.
+◦	The agent analyses the topic to identify the central controversy, the main stakeholders, and what dimensions are contested.
+•	Step 2 — Plan the research.
+◦	The agent decides what search queries are most likely to return balanced, high-quality information from both sides.
+•	Step 3 — Execute searches.
+◦	The agent calls the web search tool 2–4 times with different queries (e.g. "benefits of social media for teens", "dangers of social media teenagers research").
+•	Step 4 — Analyse results.
+◦	The agent reads the returned content, identifies factual claims, evaluates source credibility, and extracts argument material.
+•	Step 5 — Structure arguments.
+◦	The agent organises the extracted material into PRO and CON argument groups, removing duplicates and merging related points.
+•	Step 6 — Score and annotate.
+◦	The agent assigns strength scores based on how well-evidenced each argument is, and generates counterpoints for the strongest ones.
+•	Step 7 — Write output.
+◦	The agent calls the file writer tool to save the structured debate sheet to disk.
+
+2.4  AI Model Used
+The system uses Claude (claude-sonnet-4) via the Anthropic API as its core language model. Claude is responsible for all reasoning, argument structuring, scoring, and natural language generation. The model does not need to be retrained — its general knowledge and reasoning capabilities are sufficient for this task when combined with fresh web search results.
+The agent is implemented using LangChain, a Python framework that manages the ReAct reasoning loop, tool registration, tool calling, and result observation. LangChain provides the scaffolding that turns a language model into an active agent.
+
+3. Tools Used in the System
+
+The agent has access to a set of tools that it can call during execution. Each tool is a Python function with a clear purpose. The agent chooses which tool to call and when, based on its reasoning about what information it needs. Below is a description of each tool, its role, and how it connects to the overall system.
+
+3.1  Web Search Tool
+Name	web_search
+Library Used	Tavily Search API (or DuckDuckGo as a free fallback)
+Purpose	Retrieves current, real-world information about the debate topic from the internet.
+Input	A natural language search query string (e.g. "arguments for regulating social media")
+Output	A list of search result snippets including titles, URLs, and short text excerpts.
+Why It Is Needed	Without this tool, the agent would rely entirely on the language model's training data, which may be outdated or incomplete. Web search ensures the arguments are grounded in real, recent information.
+
+3.2  Text Summariser Tool
+Name	summarise_text
+Library Used	Built using Claude API (internal LLM call)
+Purpose	Condenses long web search results or article excerpts into short, argument-ready summaries.
+Input	Raw text content returned from web search — often long, messy, and unstructured.
+Output	A short (2–4 sentence) summary that preserves the key claim and removes noise.
+Why It Is Needed	Search results often return large amounts of text that contain only a small portion of useful argument material. This tool filters and compresses that content so the agent can work with it more efficiently.
+
+3.3  Argument Scorer Tool
+Name	score_argument
+Library Used	Pure Python logic + Claude API for evaluation
+Purpose	Evaluates the strength of an argument on a scale of 1 to 10 based on defined criteria.
+Input	An argument string and the side it supports (PRO or CON).
+Output	An integer score (1–10) and a short justification of the score.
+Scoring Criteria	Evidence quality (is it backed by data or research?), logical soundness (does the reasoning hold?), relevance (is it directly related to the topic?), and originality (is it a distinct point or a repetition?).
+Why It Is Needed	Not all arguments are equally strong. The scorer allows the output to highlight the most compelling points and flag weaker ones, giving the user a prioritised view of the debate landscape.
+
+3.4  File Writer Tool
+Name	write_output
+Library Used	Python built-in — open() / write()
+Purpose	Saves the completed debate preparation document to a local text file.
+Input	The fully structured debate output as a formatted string.
+Output	A .txt file saved to the /output/ directory with a timestamped filename.
+Why It Is Needed	The user needs a persistent, portable result they can refer to after the session ends. Writing to a file ensures the output is not lost when the terminal session closes.
+
+3.5  Input Validator Tool
+Name	validate_topic
+Library Used	Python built-in string operations + simple heuristics
+Purpose	Checks whether the user's input is a valid, processable debate topic before the agent begins working.
+Input	The raw string entered by the user.
+Output	A boolean result (valid/invalid) and, if invalid, an error message explaining why.
+Validation Rules	Topic must be at least 5 words long. Topic must not be empty or contain only special characters. Topic must be identifiable as a question or a debatable statement (not a factual query like "What is water?").
+Why It Is Needed	Without validation, the agent could waste API calls and produce useless output for poorly formed inputs. Early validation saves resources and gives the user clear feedback instantly.
+
+3.6  Tool Summary Table
+
+Tool Name	Role	Library	Called By
+web_search	Fetch real-world information	Tavily / DuckDuckGo	Agent (ReAct loop)
+summarise_text	Compress search results	Claude API	Agent (ReAct loop)
+score_argument	Evaluate argument strength	Python + Claude API	Agent (after analysis)
+write_output	Save results to file	Python built-in	Agent (final step)
+validate_topic	Check user input quality	Python built-in	Main program (on start)
+
+4. Preliminary Programming Concepts Required
+
+The following table lists all programming concepts that will be needed to implement this system. Each concept is explained in plain language so that the purpose and application within the project are clear.
+
+Concept	How It Will Be Used in This Project
+Functions and modularity	Each tool (search, summarise, score, write, validate) is implemented as a separate Python function. This keeps the code clean and easy to test individually.
+Classes and objects (OOP)	The agent itself will be implemented as a class with methods for initialising tools, running the reasoning loop, and handling output.
+API calls with requests / httpx	The web search tool sends HTTP requests to the Tavily or DuckDuckGo API and parses the JSON response.
+JSON parsing	API responses arrive in JSON format. The system must extract specific fields (title, snippet, URL) from nested JSON structures.
+File I/O	The write_output tool uses Python's built-in file handling to create and write .txt files in the output directory.
+String formatting and templating	The final debate document is assembled using structured string formatting to produce a consistently laid-out output file.
+Error handling (try/except)	All external tool calls (API requests, file writes) are wrapped in try/except blocks to handle network failures or unexpected responses gracefully.
+Environment variables	API keys (for Claude and Tavily) are stored in a .env file and loaded at runtime using the python-dotenv library, keeping secrets out of source code.
+Third-party libraries	The project uses: langchain (agent framework), anthropic (Claude API client), tavily-python (search API), python-dotenv (env vars), and pytest (testing).
+Prompt engineering	System prompts are carefully written to instruct the agent on its role, output format, and reasoning expectations. Prompt design directly affects output quality.
+Unit testing with pytest	Each tool function will have at least one test: a test for a valid input, a test for an invalid input, and a test for an unexpected response.
+Git and version control	The project is tracked in a GitHub repository with commits made at each major milestone (initial structure, tool implementation, agent loop, testing, documentation).
+
+4.1  Dependency Overview
+The following external Python packages will be required. All are installable via pip and will be listed in requirements.txt:
+
+•	langchain — provides the ReAct agent framework and tool abstraction layer.
+•	langchain-anthropic — connects LangChain to Claude as the underlying language model.
+•	anthropic — direct Claude API client, used inside the summarise and score tools.
+•	tavily-python — official Python client for the Tavily web search API.
+•	python-dotenv — loads API keys from a .env file into the runtime environment.
+•	pytest — used to write and run all unit and integration tests.
+•	rich — optional, used for pretty-printing output in the terminal with colours and formatting.
+
+5. Summary
+
+The Debate Coach Agent is a practical, well-scoped AI system that demonstrates meaningful use of agent-based reasoning and tool integration. It solves a real problem — helping users prepare structured, balanced debate material — without being trivially simple or unnecessarily complex.
+The key design decisions that make this project strong as a practical submission are:
+•	The agent uses multiple distinct tools, each with a clear and justifiable purpose.
+•	The ReAct reasoning loop provides a transparent, explainable agent behaviour that is easy to document and test.
+•	The system handles real-world input variation through input validation and error handling.
+•	The output is practical and immediately useful — not just a demonstration, but something a real user would value.
+•	The project structure, tool separation, and documentation approach all align with professional software development standards.
+
+The next step (Step 2) will focus on implementing the main agent loop, connecting the tools, and beginning structured testing of each component.
