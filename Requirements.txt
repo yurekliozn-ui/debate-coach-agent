@@ -1,0 +1,7 @@
+langchain
+langchain-anthropic
+anthropic
+tavily-python
+python-dotenv
+pytest
+rich
